@@ -44,16 +44,24 @@ namespace SpriteDumperExtended
         private void Dump()
         {
             Utils.Log("Dumping UI sprites to your disk...");
-            Utils.DeleteDir(spritePathBase);
+            //Utils.DeleteDir(spritePathBase);
+
+            int unNamedCount = 0;
 
             UITextureAtlas[] atlases = Resources.FindObjectsOfTypeAll(typeof(UITextureAtlas)) as UITextureAtlas[];
             for (int i = 0; i < atlases.Length; i++)
             {
-                if (atlases[i] == null || atlases[i].name == null || atlases[i].name.Length == 0) continue;
-
                 try
                 {
+                    if (atlases[i] == null || atlases[i].sprites == null || atlases[i].sprites.Count == 0) continue;
+
                     string spritePath = spritePathBase + atlases[i].name;
+
+                    if (atlases[i].name == null || atlases[i].name.Length == 0)
+                    {
+                        spritePath = spritePathBase + "UnNamed_" + unNamedCount;
+                        unNamedCount++;
+                    }
 
                     if (Utils.CreateDir(spritePath))
                     {
@@ -61,7 +69,6 @@ namespace SpriteDumperExtended
                     }
 
                     //System.Collections.Generic.List<UITextureAtlas.SpriteInfo> spritelist = UIView.GetAView().defaultAtlas.sprites;
-                    System.Collections.Generic.List<UITextureAtlas.SpriteInfo> spritelist = atlases[i].sprites;
 
                     int count = 0;
 
@@ -70,14 +77,14 @@ namespace SpriteDumperExtended
                     /*string spriteStr = "";
                     int index = 0;
                     int page = 1;*/
-                    foreach (UITextureAtlas.SpriteInfo sprite in spritelist)
+                    foreach (UITextureAtlas.SpriteInfo sprite in atlases[i].sprites)
                     {
                         try
                         {
-                            if (sprite.texture != null)
+                            String filename = Utils.MakeValidFileName(sprite.name);
+                            if (sprite.texture != null && !System.IO.File.Exists(spritePath + "\\" + filename + ".png"))
                             {
                                 byte[] pngbytes = sprite.texture.EncodeToPNG();
-                                String filename = Utils.MakeValidFileName(sprite.name);
                                 System.IO.File.WriteAllBytes(spritePath + "\\" + filename + ".png", pngbytes);
                                 count++;
                             }
@@ -134,7 +141,10 @@ namespace SpriteDumperExtended
                         }*/
                     }
 
-                    Utils.Log("Dumped " + count + " sprites to '" + spritePath + "'");
+                    if (count > 0)
+                    {
+                        Utils.Log("Dumped " + count + " sprites to '" + spritePath + "'");
+                    }
                 }
                 catch
                 { }
